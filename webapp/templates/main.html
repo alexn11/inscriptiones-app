@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<style>
+.category-container {
+  border: 1px solid gray;
+  white-space:nowrap;
+  display: inline-block;
+  margin: 2px;
+}
+.result {
+    margin: auto;
+    width: 82%;
+}
+.result-textarea {
+    margin: auto;
+    width: 100%;
+}
+form {
+    margin: auto;
+    width: 82%;
+    clear: both;
+}
+.form-textarea {
+    margin: auto;
+    width: 100%;
+}
+.learning-curves {
+    margin: auto;
+    width: 100%;
+}
+.model-cartoons {
+    margin: auto;
+    width: 100%;
+}
+.model-cartoon {
+    width: 100%;
+}
+.page-section {
+  margin: auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+.page-section-border {
+    border: 1px solid gray;
+    width:82%;
+    margin:auto;
+}
+.grid-title {
+  grid-area: title;
+  margin: auto;
+}
+.grid-image {
+  grid-area: image;
+  margin: auto;
+  width: 30%;
+}
+.title-image-grid {
+  display: grid;
+  grid-template-areas:
+   'title'
+   'image';
+  grid-gap: 10px;
+  width: 100%;
+}
+</style>
+
+
+<script  type="text/javascript">
+var model_uses_categories = {
+{% for model, do_use in model_uses_categories.items() %}
+ '{{ model }}' : {% if do_use %}true{% else %}false{% endif %},
+{% endfor %}
+};
+
+
+function toggle_categories_list(model){
+  var categories_div = document.getElementById("categories-list");
+  if(model_uses_categories[model])
+    categories_div.style.display = "block";
+  else
+    categories_div.style.display = "none";
+}
+
+function hide_all_learning_curves(){
+  var imgs = document.getElementsByClassName("learning-curves");
+  for (var i = 0; i < imgs.length ; i ++) {
+    //imgs[i].style.visibility = 'hidden';
+    imgs[i].style.display = "none";
+  }
+}
+
+function hide_all_model_cartoons(){
+  var imgs = document.getElementsByClassName("model-cartoon");
+  for (var i = 0; i < imgs.length ; i ++) {
+    imgs[i].style.visibility = 'hidden';
+    imgs[i].style.display = "none";
+  }  
+}
+
+function show_model_cartoon(model){
+  hide_all_model_cartoons();
+  var img = document.getElementById(model+"-cartoon");
+  if(img == null) return;
+  img.style.visibility = "visible";
+  img.style.display = "block";
+}
+
+function show_learning_curves(model){
+  hide_all_learning_curves();
+  var imgs = document.getElementsByClassName(model+"-learning-curves");
+  for (var i = 0; i < imgs.length ; i ++) {
+    imgs[i].style.visibility = "visible";
+    imgs[i].style.display = "block";
+  }
+}
+
+function update_page_content_according_to_selected_model(){
+  var selected_model = document.getElementById("models").value;
+  toggle_categories_list(selected_model);
+  show_model_cartoon(selected_model);
+  show_learning_curves(selected_model);
+  current_model = selected_model;
+}
+
+function setup_page(){
+  update_page_content_according_to_selected_model();
+}
+</script>
+
+
+<head>
+<title>Inscriptiones</title>
+</head>
+<body onload="setup_page()">
+
+
+<center><h1>INSCRIPTIONES</h1></center>
+
+<div class="page-section">
+<div class="result">
+{% if output %}
+<!--<b>Output:</b>-->
+<textarea class="result-textarea" rows="6" style="background-color:#cccccc" readonly>{{ output }}</textarea>
+{% endif %}
+</div>
+</div>
+
+<div class="page-section main-form">
+<form action="{{ url_for('main') }}" method="POST">
+<div class="form-textarea">
+<textarea name="prompt" id="prompt" rows="4" style="width:100%">{{ form_state['prompt'] }}</textarea>
+</div>
+<div class="page-section form-submit">
+<input type="submit" value="Send prompt">
+</div>
+<div class="page-section form-model-sel">
+<label for="models">Model:&nbsp;</label>
+<select name="models" id="models" onchange="update_page_content_according_to_selected_model()">
+{% for model in model_list %}
+ {% if (model == form_state['model_name']) %}
+<option value="{{model}}" selected="selected">{{model}}</option>
+ {% else %}
+<option value="{{model}}">{{model}}</option>
+ {% endif %}
+{% endfor %}
+</select>
+</div>
+<div class="page-section form-temperature">
+<label for="temperature">Randomness:&nbsp;</label><input name="temperature" id="temperature" type="number" step="0.01" value="{{ form_state['temperature'] }}" size=6>
+</div>
+<div class="page-section" id="categories-list" style="justify-content:center"
+{% if(not model_uses_categories[form_state['model_name']]) %}
+style='display:none;'
+{% endif %}
+>
+<label><b>Categories:</b></label><br>
+{% for category in category_list %}
+<span class="category-container">
+<input type="checkbox" name="{{ category }}" id="{{ category }}" value="{{ category }}"
+{% if category in form_state['selected_categories'] %}
+checked
+{% endif %}
+>
+<label for="{{ category }}">{{ category }}</label>
+&nbsp;
+</span>
+{% endfor %}
+</div>
+</form>
+</div>
+
+<div class="page-section-border">
+<div class="page-section">
+<div class="title-image-grid">
+<div class="grid-title">
+<h2>Model Cartoon</h2><br>
+</div>
+<div class="grid-image">
+{% for model_name in model_list %}
+<img id="{{model_name}}-cartoon" class="model-cartoon" src={{url_for('static', filename='img/' + model_cartoons[model_name])}} style="visibility:hidden">
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+<br>
+<div class="page-section-border">
+<div class="page-section">
+<div class="title-image-grid">
+<div class="grid-title">
+<h2>Learning Curves</h2>
+</div>
+<div class="grid-image">
+{% for model_name in model_list %}
+<img class="learning-curves {{model_name}}-learning-curves" src={{url_for('static', filename='img/' + learning_curves[model_name])}} style="visibility:hidden">
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
