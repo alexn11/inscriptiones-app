@@ -75,6 +75,8 @@ def main():
     return flask.render_template('main.html',
                                  form_state = form_state,
                                  model_list = model_list,
+                                 model_cartoons = model_cartoons,
+                                 learning_curves = learning_curves,
                                  model_uses_categories = model_uses_categories,
                                  category_list = category_list,
                                  output = output)
